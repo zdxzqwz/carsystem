@@ -1,0 +1,29 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <meta name="format-detection" content="telephone=no,email=no,adress=no"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1.0,user-scalable=no;"/>
+    <title>3dControl</title>
+    <!--CSS样式-->
+    <link rel="stylesheet" href="css/main.css">
+    <!--JS部分-->
+    <script src="lib/jquery/1.9.1/jquery.min.js"></script>
+</head>
+<body>
+<div id="v3dTest"></div>
+</body>
+<script src="js/3d_control.js" language="JavaScript"></script>
+<script language="JavaScript">
+    $(document).ready(function () {
+        $("#v3dTest").v3dControl({
+            imgLength: 26,//必填
+            width: "500",//插件宽   可填   默认为容器宽  如果不想放大缩小序列图则填写序列图的宽高反之则不填width
+            height: "400",//插件高 可填   默认为容器高  如果不想放大缩小序列图则填写序列图的宽高反之则不填height
+            imgPath: "img/",//图片路径  可填  默认img/
+            imgType: ".png",//图片类型  可填  默认.png
+            isAuto: true//是否自动播放  可填      默认false
+            //$(window).height(500)
+        })
+    })
+</script>
+</html>

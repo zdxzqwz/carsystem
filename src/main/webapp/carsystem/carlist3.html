@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>车辆档案管理</title>
+<link rel="stylesheet"
+	href="jquery-easyui-1.4.2/themes/default/easyui.css" />
+<link rel="stylesheet" href="jquery-easyui-1.4.2/themes/icon.css" />
+<script src="jquery-easyui-1.4.2/jquery.min.js" charset="UTF-8"></script>
+<script src="jquery-easyui-1.4.2/jquery.easyui.min.js" charset="UTF-8"></script>
+<script src="jquery-easyui-1.4.2/locale/easyui-lang-zh_CN.js"
+	charset="UTF-8"></script>
+<script>
+		
+		var url;
+			$(function() {
+				
+			
+			
+			});
+			   //加载大区
+			   function loadRegion(){
+				   $("#reg_id").empty(); 
+				   var regs="";
+				   $.getJSON("../region.do", function(data){ 
+					  $.each(data, function(i,reg){
+					       regs+="<option value='"+reg.reg_id+"'>"+reg.reg_name+"</option>";
+					   }); 
+					
+					    $("#reg_id").html(regs);
+					 });
+			   }
+               
+			   
+				   //加载分公司
+				   function loadFiliale(){
+					     $("#fil_id").empty();
+					      var fils="";
+					       $.getJSON("../filiale.do?reg_id="+$("#reg_id").val(), function(data){
+						   $.each(data, function(i,fil){
+							   fils+="<option value='"+fil.fil_id+"'>"+fil.fil_name+"</option>";
+						   });
+						   $("#fil_id").html(fils);
+						 });
+				   }
+				   //加载车辆类型
+				   function loadVehtype(){
+					   $("#veh_id").empty();
+					   var vehs="";
+					   $.getJSON("../veh.do", function(data){ 
+						  $.each(data, function(i,veh){
+						       vehs+="<option value='"+veh.veh_id+"'>"+veh.veh_name+"</option>";
+						   }); 
+						
+						    $("#veh_id").html(vehs);
+						 });
+				   }
+	               
+				   
+					   //加载车辆型号
+					   function loadVehm(){
+						     $("#vehm_id").empty();
+						      var vehms="";
+						       $.getJSON("../vehm.do?veh_id="+$("#veh_id").val(), function(data){
+							   $.each(data, function(i,vehm){
+								   vehms+="<option value='"+vehm.vehm_id+"'>"+vehm.vehm_name+"</option>";
+							   });
+							   $("#vehm_id").html(vehms);
+							 });
+					   }
+			/**模糊查询
+			   重新发起异步请求，查询数据库， 重新加载datagrid
+			*/
+			function searchUser(){
+				$('#dg').datagrid('load',{
+					car_id:$("#car_id").val(),
+					car_vehicles:$('#car_vehicles').val()
+				});
+			}
+			/* 单击添加按钮，出现用户窗口
+			*/
+			function openUserAddDialog(){
+				$("#fm").form('clear');
+				$("#dlg").dialog("open").dialog("setTitle","添加车辆档案信息");
+				  loadRegion(); 
+				 loadVehtype();
+				 $("#reg_id").change(function(){
+					  
+					   loadFiliale();
+					   
+				   });
+				 $("#veh_id").change(function(){
+					  
+					   loadVehm();
+					   
+				   });
+				 url="../car.do?opt=addCar"; 
+				   
+			
+				
+			}
+		
+			/*单击关闭按钮，出现用户窗口
+			*/
+			function closeUserAddDialog(){
+				$("#dlg").dialog("close");
+				$("#fm").form('clear');
+				
+			}
+			/*
+			    实现保存发起异步请求，请求数据到后台
+			*/
+			function saveUser(){
+				$("#fm").form("submit",{
+					url:url,
+					onSubmit:function(){
+						return $(this).form("validate");//提交之前进行校验
+					},
+					success:function(result){
+						var result=eval('('+result+')');
+						if(result.errorMsg){
+							$.messager.alert('系统提示',"<font color=red>"+result.errorMsg+"</font>");
+							return;
+						}else{
+							$.messager.alert('系统提示','保存成功');
+							closeUserAddDialog();
+							$("#dg").datagrid("reload");
+						}
+					}
+				});
+				
+			}
+		    
+			/*
+			    修改功能
+			*/
+			function openUserModifyDialog(){
+				 	
+				//获取选中要修改的datagrid行
+				var selectedRows=$("#dg").datagrid('getSelections');
+				
+				if(selectedRows.length!=1){
+					$.messager.alert('系统提示','请选择一条要编辑的数据！');
+					return;
+				}
+				//获取行的索引
+				var row=selectedRows[0];
+				
+				$("#dlg").dialog("open").dialog("setTitle","修改车辆档案信息");
+				 loadRegion(); 
+				 loadVehtype();
+				 $("#reg_id").change(function(){
+					  
+					   loadFiliale();
+					   
+				   });
+				 $("#veh_id").change(function(){
+					  
+					   loadVehm();
+					   
+				   });
+				
+				//把选中的行的信息值，直接赋值给对话框的form中
+				$("#fm").form("load",row);
+				url="../car.do?opt=upd&car_id="+row.car_id;
+			}
+           
+			/*
+			删除功能
+			*/
+			function deleteUser(){
+				//获取选中要修改的datagrid行
+				var selectedRows = $("#dg").datagrid('getSelections');
+				if(selectedRows.length==0){
+					$.messager.alert('系统提示','请选择要删除的数据！');
+					return;
+				}
+				//实现删除多条记录
+				var strIds=[];
+				for(var i=0;i<selectedRows.length;i++){
+					strIds.push(selectedRows[i].car_id);
+					
+				}
+				var ids=strIds.join("','");
+				
+			
+				$.messager.confirm("系统提示","您确认要删除这<font color=red>"+selectedRows.length+"</font>条数据吗？",function(r){
+					if(r){
+						//发起异步请求
+						$.post("../car.do?opt=del",{delIds:ids},function(result){
+							if(result.success){
+								$.messager.alert('系统提示',"您已成功删除<font color=red>"+result.delNums+"</font>条数据！");
+								$("#dg").datagrid("reload");
+							}else{
+								$.messager.alert('系统提示',result.errorMsg);
+							}
+						},"json");
+					}
+				});
+			}
+		</script>
+<body style="margin: 1px;">
+	<!-- 查询所有datagrid -->
+	<table id="dg" title="车辆档案管理" class="easyui-datagrid" fitColumns="true"
+		pagination="true" rownumbers="true" url="../car.do?opt=queryAll"
+		fit="true" toolbar="#tb">
+		<thead>
+
+
+			<tr>
+				<th field="cb" checkbox="true" align="center"></th>
+				<th field="car_id" width="100" align="center">车牌号</th>
+				<th field="car_name" width="150" align="center">车辆名字</th>
+				<th field="car_flag" width="150" align="center">是否为租赁车辆</th>
+				<th field="car_vehicles" width="100" align="center">车辆状况</th>
+				<th field="veh_id" width="100" align="center"
+					data-options="hidden:'ture'">车辆类型ID</th>
+				<th field="veh_name" width="100" align="center">车辆类型</th>
+				<th field="vehm_id" width="100" align="center"
+					data-options="hidden:'ture'">车辆型号ID</th>
+				<th field="vehm_name" width="100" align="center">车辆型号</th>
+				<th field="reg_id" width="100" align="center"
+					data-options="hidden:'ture'">所属大区ID</th>
+				<th field="reg_name" width="100" align="center">所属大区</th>
+				<th field="fil_id" width="100" align="center"
+					data-options="hidden:'ture'">分公司ID</th>
+				<th field="fil_name" width="100" align="center">分公司</th>
+				<th field="car_time" width="150" align="center">操作时间</th>
+
+			</tr>
+		</thead>
+	</table>
+
+	<!-- 查询所有工具栏以及模糊查询 -->
+	<div id="tb">
+		<div>
+			<a href="javascript:openUserAddDialog()" class="easyui-linkbutton"
+				iconCls="icon-add" plain="true">添加</a> <a
+				href="javascript:openUserModifyDialog()" class="easyui-linkbutton"
+				iconCls="icon-edit" plain="true">修改</a> <a
+				href="javascript:deleteUser()" class="easyui-linkbutton"
+				iconCls="icon-remove" plain="true">删除 </a> <!-- <a
+				href="javascript:findByIdTech()" class="easyui-linkbutton"
+				iconCls="icon-search" plain="true">查看车辆技术档案 </a>
+ -->		</div>
+		<div>
+			&nbsp;编号：&nbsp;<input type="text" name="car_id" id="car_id" size="20"
+				onkeydown="if(event.keyCode==13) searchUser()" /> &nbsp;车辆状态：&nbsp;
+				<!-- <input type="text" name="car_flag" id="car_flag" size="20"
+				onkeydown="if(event.keyCode==13) searchUser()" />  -->
+				<select id="car_vehicles" name="car_vehicles"
+						style="width: 180px;" onkeydown="if(event.keyCode==13) searchUser()">
+							<option value="" checked="checked"></option>
+							<option value="忙" >忙</option>
+							<option value="空闲">空闲</option>
+							<option value="维修">维修</option>
+					</select>
+				<a href="javascript:searchUser()" class="easyui-linkbutton"
+				iconCls="icon-search" plain="true">搜索</a>
+		</div>
+	</div>
+
+	<!-- 添加功能对话框,修改功能对话框 -->
+	<div id="dlg" class="easyui-dialog"
+		style="width: 600px; height: 600px; padding: 10px 20px" closed="true"
+		buttons="#dlg-buttons">
+		<form id="fm" method="post">
+			<table cellpadding="5" align="center">
+
+				<tr>
+					<td>车牌号：</td>
+					<td><input class="easyui-textbox" type="text" name="car_id"
+						id="car_id"></input></td>
+				</tr>
+
+				<tr>
+					<td>车辆类型:</td>
+					<td><select id="veh_id" name="veh_id" style="width: 180px;">
+
+					</select></td>
+				</tr>
+
+				<tr>
+					<td>车辆型号:</td>
+					<td><select id="vehm_id" name="vehm_id" style="width: 180px;">
+
+					</select></td>
+				</tr>
+				<tr>
+					<td>所属大区:</td>
+					<td><select id="reg_id" name="reg_id" style="width: 180px;">
+
+					</select></td>
+				</tr>
+
+				<tr>
+					<td>分公司:</td>
+					<td><select id="fil_id" name="fil_id" style="width: 180px;">
+					</select></td>
+				</tr>
+				<tr>
+					<td>车名:</td>
+					<td><input class="easyui-textbox" type="text" name="car_name"
+						id="car_name" data-options="required:true"></input></td>
+				</tr>
+				<tr>
+					<td>是否为租赁车辆：</td>
+					<td><select id="car_flag" name="car_flag"
+						style="width: 180px;">
+							<option value="否" checked="checked">否</option>
+							<option value="是">是</option>
+					</select></td>
+
+				</tr>
+
+				<tr>
+					<td>车辆状况：</td>
+					<td><select id="car_vehicles" name="car_vehicles"
+						style="width: 180px;">
+							<option value="空闲" checked="checked">空闲</option>
+							<option value="忙">忙</option>
+							<option value="维修">维修</option>
+
+					</select></td>
+				</tr>
+
+
+
+			</table>
+		</form>
+	</div>
+	<!-- 添加功能对话框 的保存和关闭-->
+	<div id="dlg-buttons">
+		<a href="javascript:saveUser()" class="easyui-linkbutton"
+			iconCls="icon-ok">保存</a> <a href="javascript:closeUserAddDialog()"
+			class="easyui-linkbutton" iconCls="icon-cancel">关闭</a>
+	</div>
+
+</body>
+</html>

@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>数据资料管理</title>
+<link rel="stylesheet"
+	href="jquery-easyui-1.4.2/themes/default/easyui.css" />
+<link rel="stylesheet" href="jquery-easyui-1.4.2/themes/icon.css" />
+<script src="jquery-easyui-1.4.2/jquery.min.js" charset="UTF-8"></script>
+<script src="jquery-easyui-1.4.2/jquery.easyui.min.js" charset="UTF-8"></script>
+<script src="jquery-easyui-1.4.2/locale/easyui-lang-zh_CN.js"
+	charset="UTF-8"></script>
+<link rel="stylesheet" href="css/up.css">
+    
+<script>
+		
+		var url;
+			$(function() {
+			
+
+			});
+			/**模糊查询
+			   重新发起异步请求，查询数据库， 重新加载datagrid
+			*/
+			function searchUser(){
+				$('#dg').datagrid('load',{
+					f_id:$("#f_id").val(),
+					f_name:$('#f_name').val()
+				});
+			}
+			/* 单击上传按钮，出现用户窗口
+			*/
+			function uploadDialog(){
+				$("#fm").form('clear');
+				$("#dlg").dialog("open").dialog("setTitle","上传文件");
+				url="../files.do?opt=upload";
+				
+			}
+			/*单击关闭按钮，出现用户窗口
+			*/
+			function closeUserAddDialog(){
+				$("#dlg").dialog("close");
+				$("#fm").form('clear');
+			}
+			/*
+			    实现保存发起异步请求，请求数据到后台
+			*/
+			function saveUser(){
+				$("#fm").form("submit",{
+					url:url,
+					onSubmit:function(){
+						return $(this).form("validate");//提交之前进行校验
+					},
+					success:function(result){
+						var result=eval('('+result+')');
+						if(result.errorMsg){
+							$.messager.alert('系统提示',"<font color=red>"+result.errorMsg+"</font>");
+							return;
+						}else{
+							$.messager.alert('系统提示','上传成功');
+							closeUserAddDialog();
+							$("#dg").datagrid("reload");
+						}
+					}
+				});
+				
+			}
+		
+			
+			/*
+			下载功能
+			*/
+              function downloadDialog(){
+            		//获取选中要修改的datagrid行
+  				var selectedRows = $("#dg").datagrid('getSelections');
+  				if(selectedRows.length==0){
+  					$.messager.alert('系统提示','请选择要下载的文件！');
+  					return;
+  				}
+  				//实现下载多个文件
+  				var strIds=[];
+  				for(var i=0;i<selectedRows.length;i++){
+  					strIds.push(selectedRows[i].f_id);
+  					
+  				}
+  				var ids=strIds.join("','");
+  				
+  			
+  				$.messager.confirm("系统提示","您确认要下载这<font color=red>"+selectedRows.length+"</font>个文件吗？",function(r){
+  					if(r){
+  						
+  						window.location.href="../down.do?opt=download&delIds="+ids;
+  					
+  					}
+  				});				
+				
+			}
+			/*			
+			删除功能
+			*/
+			function deleteUser(){
+				//获取选中要修改的datagrid行
+				var selectedRows = $("#dg").datagrid('getSelections');
+				if(selectedRows.length==0){
+					$.messager.alert('系统提示','请选择要删除的数据！');
+					return;
+				}
+				//实现删除多条记录
+				var strIds=[];
+				for(var i=0;i<selectedRows.length;i++){
+					strIds.push(selectedRows[i].f_id);
+					
+				}
+				var ids=strIds.join("','");
+				
+			
+				$.messager.confirm("系统提示","您确认要删除这<font color=red>"+selectedRows.length+"</font>条数据吗？",function(r){
+					if(r){
+						//发起异步请求
+						$.post("../files.do?opt=del",{delIds:ids},function(result){
+							if(result.success){
+								$.messager.alert('系统提示',"您已成功删除<font color=red>"+result.delNums+"</font>条数据！");
+								$("#dg").datagrid("reload");
+							}else{
+								$.messager.alert('系统提示',result.errorMsg);
+							}
+						},"json");
+					}
+				});
+			}
+		</script>
+<body style="margin: 1px;">
+	<!-- 查询所有datagrid -->
+	<table id="dg" title="数据资料上传下载" class="easyui-datagrid" fitColumns="true"
+		pagination="true" rownumbers="true" url="../files.do?opt=queryAll"
+		fit="true" toolbar="#tb">
+		<thead>
+			<tr>
+				<th field="cb" checkbox="true" align="center"></th>
+				<th field="f_id" width="200" align="center">文件编号</th>
+				<th field="f_name" width="200" align="center">文件名</th>
+				<th field="f_path" width="200" align="center" data-options="hidden:'true'">文件路径</th>
+			</tr>
+		</thead>
+	</table>
+	<!-- 查询所有工具栏以及模糊查询 -->
+	<div id="tb">
+		<div>
+			<a href="javascript:uploadDialog()" class="easyui-linkbutton"
+				iconCls="icon-add" plain="true">上传</a>
+				 <a href="javascript:downloadDialog()" class="easyui-linkbutton"
+				iconCls="icon-edit" plain="true">下载</a> 
+				 <a
+				href="javascript:deleteUser()" class="easyui-linkbutton"
+				iconCls="icon-remove" plain="true">删除</a>
+		</div>
+		<div>
+			&nbsp;文件编号：&nbsp;<input type="text" name="f_id" id="f_id" size="20"
+				onkeydown="if(event.keyCode==13) searchUser()" /> &nbsp;文件名：&nbsp;<input
+				type="text" name="f_name" id="f_name" size="20"
+				onkeydown="if(event.keyCode==13) searchUser()" /> <a
+				href="javascript:searchUser()" class="easyui-linkbutton"
+				iconCls="icon-search" plain="true">搜索</a>
+		</div>
+	</div>
+
+	<!-- 上传功能对话框 -->
+	<div id="dlg" class="easyui-dialog"
+		style="width: 300px; height: 300px; padding: 10px 20px" closed="true"
+		buttons="#dlg-buttons">
+		<form id="fm"  method="post" enctype="multipart/form-data">
+		
+<!-- 		 <input id="f_name" name="f_name" class="easyui-filebox"style="width:100%" data-options="buttonText:'选择',prompt:'请选择文件...'"/></input>
+		 <input id="f_id" name="f_id" class="easyui-filebox"style="width:100%" data-options="buttonText:'选择',prompt:'请选择文件...'"/></input>					
+		 <input id="f_path" name="f_path" class="easyui-filebox"style="width:100%" data-options="buttonText:'选择',prompt:'请选择文件...'"/></input> -->
+		<table cellpadding="5" align="center">
+
+				 <tr data-options="hidden:true">
+					
+					<td> <input id="f_name" name="f_name" class="easyui-filebox"style="width:100%" data-options="buttonText:'选择',prompt:'请选择文件...'"/></td>
+				</tr> 
+
+			
+				
+		
+
+			</table>
+		</form>
+	</div>
+	
+	<!-- 上传功能对话框 的保存和关闭-->
+	<div id="dlg-buttons">
+		<a href="javascript:saveUser()" class="easyui-linkbutton"
+			iconCls="icon-ok">确认上传</a> <a href="javascript:closeUserAddDialog()"
+			class="easyui-linkbutton" iconCls="icon-cancel">取消上传</a>
+	</div>
+	
+</body>
+</html>

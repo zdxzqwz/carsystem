@@ -1,0 +1,10 @@
+.container{
+	margin: 0 auto;
+	padding: 50px 0 0 50px;
+	width: 500px;
+	height: 500px;
+	border: 1px solid black;
+}
+.c-red{
+	color: #FF0000;
+}

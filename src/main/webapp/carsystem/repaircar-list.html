@@ -1,0 +1,214 @@
+﻿<!DOCTYPE HTML>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="renderer" content="webkit|ie-comp|ie-stand">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+<link rel="stylesheet" type="text/css" href="static/h-ui/css/H-ui.min.css" />
+<link rel="stylesheet" type="text/css" href="static/h-ui.admin/css/H-ui.admin.css" />
+<link rel="stylesheet" type="text/css" href="lib/Hui-iconfont/1.0.8/iconfont.css" />
+<link rel="stylesheet" type="text/css" href="static/h-ui.admin/skin/default/skin.css" id="skin" />
+<link rel="stylesheet" type="text/css" href="static/h-ui.admin/css/style.css" />
+<link rel="stylesheet" type="text/css" href="layui/css/layui.css" />
+<script type="text/javascript" src="layui/layui.js"></script>
+<title>车辆维修管理</title>
+</head>
+<body>
+<nav class="breadcrumb"><i class="Hui-iconfont">&#xe67f;</i> 首页 <span class="c-gray en">&gt;</span> 运行管理 <span class="c-gray en">&gt;</span> 维修管理 <a class="btn btn-success radius r" style="line-height:1.6em;margin-top:3px" href="javascript:location.replace(location.href);" title="刷新" ><i class="Hui-iconfont">&#xe68f;</i></a></nav>
+<div class="page-container">
+	<div class="text-c"> 车牌号：
+		<input type="text" id="rep_car_id" class="input-text" style="width:120px;">
+		维修厂：
+		<input type="text" id="rep_maintain" class="input-text" style="width:120px;">
+		日期范围：
+		<input type="text" onfocus="WdatePicker({ maxDate:'#F{$dp.$D(\'datemax\')||\'%y-%M-%d\'}' })" id="datemin" class="input-text Wdate" style="width:120px;">
+		-
+		<input type="text" onfocus="WdatePicker({ minDate:'#F{$dp.$D(\'datemin\')}',maxDate:'%y-%M-%d' })" id="datemax" class="input-text Wdate" style="width:120px;">
+		<button name="" id="sub" class="btn btn-success" type="submit"><i class="Hui-iconfont">&#xe665;</i> 搜索</button>
+	</div>
+	<div class="cl pd-5 bg-1 bk-gray mt-20"> <span class="l"><a href="javascript:;" onclick="datadel()" class="btn btn-danger radius"><i class="Hui-iconfont">&#xe6e2;</i> 批量删除</a> <a href="javascript:;" onclick="member_add('维修车辆','repaircar-add.jsp','','510')" class="btn btn-primary radius"><i class="Hui-iconfont">&#xe600;</i> 添加维修纪录</a></span></div>
+	<div class="mt-20">
+	<table class="table table-border table-bordered table-bg table-hover table-sort">
+			<thead style="font-size:11px;">
+				<tr class="text-c">
+					<th width="40"><input name="" type="checkbox" value=""></th>
+					<th width="60">维修编号</th>
+					<th width="60">车牌号</th>
+					<th width="80">维修厂</th>
+					<th width="170">维修详情</th>
+					<th width="50">共计费用</th>
+					<th width="130">送修日期</th>
+					<th width="130">取车日期</th>
+					<th width="150">备注</th>
+					<th width="50">记录人</th>
+					<th width="50">操作</th>
+				</tr>
+			</thead>
+			<tbody id="tbody" style="font-size:10px;"></tbody>
+		</table>
+	</div>
+	<div id="page"></div>
+</div>
+
+
+<!--_footer 作为公共模版分离出去-->
+<script type="text/javascript" src="lib/jquery/1.9.1/jquery.min.js"></script> 
+<script type="text/javascript" src="lib/layer/2.4/layer.js"></script>
+<script type="text/javascript" src="static/h-ui/js/H-ui.min.js"></script> 
+<script type="text/javascript" src="static/h-ui.admin/js/H-ui.admin.js"></script> <!--/_footer 作为公共模版分离出去-->
+
+<!--请在下方写此页面业务相关的脚本-->
+<script type="text/javascript" src="lib/My97DatePicker/4.8/WdatePicker.js"></script> 
+<script type="text/javascript" src="lib/laypage/1.2/laypage.js"></script>
+<script type="text/javascript">
+$(function(){
+	queryAllRep('','','','',1,10);
+	//模糊查询，给搜索按钮绑定单击事件
+	$("#sub").click(function(){
+		var rep_car_id = $("#rep_car_id").val();
+		var rep_maintain = $("#rep_maintain").val();
+		var datemin = $("#datemin").val();
+		var datemax = $("#datemax").val();
+		//alert(car_id+"\t"+dri_name+"\t"+datemin+"\t"+datemax);
+		queryAllreturnCar(rep_car_id,rep_maintain,datemin,datemax,1,10);  
+	});
+});
+//页面加载发起异步请求查询所有维修记录
+function queryAllRep(rep_car_id,rep_maintain,datemin,datemax,curr,limit){
+	//模糊查询前先清空
+	 $("#tbody").empty();
+	//页面加载事件，异步请求查询所有
+	 $.getJSON("../repaircar.do",{opt:"queryAll",rep_car_id:rep_car_id,rep_maintain:rep_maintain,datemin:datemin,datemax:datemax,curr:curr,limit:limit}, function(data){
+		 //遍历后台传过来的json对象
+		 var data = eval(data);
+		 //alert(data.count);
+		 $.each(data.repaircar, function(i,rep){
+			 $("#tbody").append("<tr class=\"text-c\"><td><input name=\"repaircar\" type=\"checkbox\" value="+rep.rep_id+"></td>"+
+                    "<td>"+rep.rep_id+"</td>"+
+                    "<td>"+rep.rep_car_id+"</td>"+
+                    "<td>"+rep.rep_maintain+"</td>"+
+                    "<td>"+rep.rep_details+"</td>"+
+                    "<td>"+rep.rep_price+"</td>"+
+                    "<td>"+rep.rep_out_time+"</td>"+
+                    "<td>"+rep.rep_return_time+"</td>"+
+                    "<td>"+rep.rep_notes+"</td>"+
+                    "<td>"+rep.rep_inputer+"</td>"+
+                    "<td><a style=\"text-decoration:none\" href=\"javascript:;\" onclick=\"member_huanyuan(this,'"+rep.rep_id+"','"+rep.rep_car_id+"')\" title=\"取回维修车辆\"><i class=\"Hui-iconfont\">&#xe66b;</i></a>"+
+                    "<a title=\"编辑\" href=\"javascript:;\" onclick=\"member_edit('编辑','repaircar-edit.jsp','"+rep.rep_id+"','','510')\" class=\"ml-5\" style=\"text-decoration:none\"><i class=\"Hui-iconfont\">&#xe6df;</i></a>" +
+                    "<a title=\"删除\" href=\"javascript:;\" onclick=\"member_del('"+rep.rep_id+"')\" class=\"ml-5\" style=\"text-decoration:none\"><i class=\"Hui-iconfont\">&#xe6e2;</i></a>" +
+                    "</td></tr>");
+		});
+		 paged(curr,data.count);
+	});
+}
+//分页
+function paged(curr,count){
+	layui.use('laypage', function(){
+		  var laypage = layui.laypage;
+		  //执行一个laypage实例
+		  laypage.render({
+			    elem: 'page'
+			    ,count: count
+			    ,curr:curr
+			    ,layout: ['count', 'prev', 'page', 'next', 'limit', 'refresh', 'skip']
+			    ,jump: function(obj,first){
+			    	console.log(obj.curr); //得到当前页，以便向服务端请求对应页的数据。
+			        console.log(obj.limit); //得到每页显示的条数
+			    	if(!first){
+			    		queryAllRep('','','','',obj.curr,obj.limit);
+			    	}
+			    }
+			  });
+	});
+}
+//点击取回维修车辆，进数据库修改该车辆的车辆状态
+function member_huanyuan(o,id,car_id){
+	//alert(car_id);
+	layer.confirm('确认车以修好了吗？',function(index){
+		$.ajax({
+			type: 'POST',
+			url: '../repaircar.do?opt=quche&rep_id='+id+"&rep_car_id="+car_id,
+			dataType: 'json',
+			success: function(data){
+				//alert(data.success);
+				if(data.success){
+					layer.msg('取车成功', {icon: 1});
+					queryAllRep('','','','',1,10);
+				}else{
+					layer.msg('取车失败', {icon: 5});
+					queryAllRep('','','','',1,10);
+				}
+				
+			},
+			error:function(data) {
+				
+				//console.log(data.msg);
+			},
+		});				
+		//layer_show('取回维修车辆','returncar-add2.html','','');
+	});
+}
+/*点击添加按钮，显示添加页面*/
+function member_add(title,url,w,h){
+	layer_show(title,url,w,h);
+}
+/*点击编辑按钮，弹出窗口，servlet跳转*/
+function member_edit(title,url,id,w,h){
+	//layer_show(title,url,w,h);
+	layer.open({
+		title:'修改车辆维修纪录',
+		  type: 2,
+		  area: ['700px', '510px'],
+		  fixed: false, //不固定
+		  maxmin: true,
+		  content: '../repaircar.do?opt=findById&rep_id='+id+"&url="+url
+		});
+}
+/*点击删除按钮，给出友情提示，点击确定执行删除*/
+function member_del(id){
+	layer.confirm('确认要删除吗？',function(){
+		$.ajax({
+			type: 'POST',
+			url: '../repaircar.do?opt=del&rep_id='+id,
+			dataType: 'json',
+			success: function(data){
+				layer.msg('删除成功', {icon: 1});
+				queryAllRep('','','','',1,10);
+			},
+			error:function(data) {
+				layer.msg('删除失败', {icon: 5});
+				queryAllRep('','','','',1,10);
+			},
+		});		
+	});
+}
+//批量删除
+function datadel(){
+	 var chk_value =[]; 
+	    $("#tbody").find('input[name="repaircar"]:checked').each(function(){ //遍历，将所有选中的值放到数组中
+	        chk_value.push($(this).val()); 
+	    });
+	//判断是否选中至少一个 
+    if(chk_value.length==0){
+        layer.msg('请选中一个!', {icon: 5});
+    }else{
+    	 //给出友情提示
+    	layer.confirm('哦！您是确定删除这'+chk_value.length+'条记录吗？', function(){
+    			//发起异步请求删除多条记录
+    		  $.get("../repaircar.do?opt=delIds&delIds="+chk_value, function(data){
+    	    		layer.msg('你删除了'+data+"条纪录", {icon: 1});
+    	    		queryAllRep('','','','',1,10);
+    	    		/* setTimeout(function(){
+    					window.location.reload();
+    				}, 1000); */
+    	    	});
+    		}); 
+    	//console.log(chk_value);	
+    }
+}
+</script> 
+
+</body>
+</html>
